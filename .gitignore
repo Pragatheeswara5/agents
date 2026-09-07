@@ -1,0 +1,6 @@
+/.env
+/requirements.txt
+/venv
+/multi-tools-learning/tasks.db
+/.vscode
+/finance_assistant_agent
