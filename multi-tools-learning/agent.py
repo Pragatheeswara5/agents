@@ -186,10 +186,42 @@ def run_agent(user_message):
 
         for tool in message.tool_calls:
             tool_name = tool.function.name
-            function = available_tools[tool_name]
             
-            arguments = json.loads(tool.function.arguments) if tool.function.arguments else {}
+            try:
+                function = available_tools[tool_name]
+            except KeyError:
+                state["messages"].append({
+                    "role": "tool",
+                    "tool_call_id": tool.id,
+                    "content": f"Error: Tool '{tool_name}' is not available."
+                })
+                continue
             
+            try:
+                arguments = json.loads(tool.function.arguments) if tool.function.arguments else {}
+            except json.JSONDecodeError:
+                state["messages"].append({
+                    "role": "tool",
+                    "tool_call_id": tool.id,
+                    "content": "Invalid arguments: expected a JSON object."
+                })
+                continue
+            
+            if not isinstance(arguments, dict):
+                state["messages"].append({
+                    "role": "tool",
+                    "tool_call_id": tool.id,
+                    "content": "Invalid arguments: expected a JSON object."
+                })
+                continue
+            
+            if type(arguments['task_id']) is not int or arguments['task_id'] <= 0:
+                state["messages"].append({
+                    "role": "tool",
+                    "tool_call_id": tool.id,
+                    "content": "Invalid task_id: expected a positive integer."
+                })
+                continue
             result = function(**arguments)
             
             tool_call_counts[tool_name] = tool_call_counts.get(tool_name, 0) + 1
@@ -229,7 +261,7 @@ def run_agent(user_message):
         # print(final_response.choices[0].message.content)
             
 answer = run_agent(
-    "List all my current tasks."
+    "Delete task id -1"
 )
 
 print("\nAssistant:")

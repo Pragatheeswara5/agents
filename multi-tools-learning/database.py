@@ -119,6 +119,9 @@ def get_task(task_id):
     return task
 
 def delete_task(task_id):
+    if type(task_id) is not int or task_id <= 0:
+        return "Invalid task ID. It must be a positive integer."
+    
     conn = get_connection()
 
     try:
