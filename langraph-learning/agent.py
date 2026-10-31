@@ -6,6 +6,7 @@ from tools import multiply, subtract, add
 import json
 from langchain_core.messages import AIMessage
 from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.checkpoint.memory import MemorySaver
 
 state = MessagesState(messages=[])
 
@@ -148,13 +149,37 @@ graph_builder.add_edge(START, "chatbot")
 graph_builder.add_conditional_edges("chatbot", tools_condition)
 graph_builder.add_edge("tools", "chatbot")
 
-graph=graph_builder.compile()
+memory = MemorySaver()
 
-result = graph.invoke({
+graph=graph_builder.compile(
+    checkpointer=memory
+)
+
+config = {
+    "configurable": {
+        "thread_id": "conversation_1"
+    }
+}
+
+result1 = graph.invoke({
     "messages": [
-        {"role": "user", "content": "Multiply 8 by 5, then add 10 to the result."}
+        {"role": "user", "content": "My name is Prag"}
     ]
-})
+},
+    config=config
+)
 
-for message in result["messages"]:
-    print(message)
+print("First response")
+print(result1["messages"][-1].content)
+
+result2=graph.invoke(
+    {
+        "messages":[
+            {"role":"user", "content":"What is my name"}
+        ]
+    },
+    config=config
+)
+
+print("Second response:")
+print(result2["messages"][-1].content)
